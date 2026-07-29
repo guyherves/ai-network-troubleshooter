@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block page_title %}Live Traffic{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0" style="color: var(--text-bright); font-weight:700;">
+            <i class="bi bi-activity me-2" style="color: var(--primary);"></i>Live Traffic Monitoring
+        </h4>
+        <p class="mb-0" style="font-size:0.82rem; color: var(--text-muted);">Real-time bandwidth usage and protocol analysis</p>
+    </div>
+    <div class="live-badge fs-6 px-3 py-2">LIVE CAPTURE ACTIVE</div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-graph-up"></i> Network Bandwidth (Mbps)</span>
+            </div>
+            <div class="noc-card-body">
+                <canvas id="liveBandwidthChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-pie-chart"></i> Protocol Distribution</span>
+            </div>
+            <div class="noc-card-body">
+                <canvas id="liveProtocolChart" height="240"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="noc-card">
+    <div class="noc-card-header">
+        <span><i class="bi bi-list-columns-reverse"></i> Top Talkers (Active Connections)</span>
+    </div>
+    <div class="noc-card-body" style="padding:0;">
+        <div class="table-responsive">
+            <table class="noc-table">
+                <thead>
+                    <tr>
+                        <th>Source IP</th>
+                        <th>Destination IP</th>
+                        <th>Protocol</th>
+                        <th>Port</th>
+                        <th>Bytes Transferred</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="mono">192.168.1.101</td>
+                        <td class="mono">142.250.190.46</td>
+                        <td><span class="status-badge status-online">HTTPS</span></td>
+                        <td class="mono">443</td>
+                        <td>45.2 MB</td>
+                        <td>00:15:23</td>
+                    </tr>
+                    <tr>
+                        <td class="mono">192.168.1.55</td>
+                        <td class="mono">8.8.8.8</td>
+                        <td><span class="status-badge status-warning">DNS</span></td>
+                        <td class="mono">53</td>
+                        <td>1.2 MB</td>
+                        <td>00:02:11</td>
+                    </tr>
+                    <tr>
+                        <td class="mono">192.168.1.200</td>
+                        <td class="mono">104.21.34.45</td>
+                        <td><span class="status-badge status-online">HTTP</span></td>
+                        <td class="mono">80</td>
+                        <td>12.8 MB</td>
+                        <td>00:45:00</td>
+                    </tr>
+                    <tr>
+                        <td class="mono">192.168.1.105</td>
+                        <td class="mono">185.199.108.153</td>
+                        <td><span class="status-badge" style="background:var(--info-glow); color:var(--info);">SSH</span></td>
+                        <td class="mono">22</td>
+                        <td>5.5 MB</td>
+                        <td>01:10:05</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const bwCtx = document.getElementById('liveBandwidthChart').getContext('2d');
+    new Chart(bwCtx, {
+        type: 'line',
+        data: {
+            labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'],
+            datasets: [{
+                label: 'Download (Mbps)',
+                data: [120, 150, 240, 210, 180, 310, 290],
+                borderColor: '#22C55E', backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                borderWidth: 2, fill: true, tension: 0.4
+            }, {
+                label: 'Upload (Mbps)',
+                data: [40, 45, 60, 55, 50, 80, 75],
+                borderColor: '#2563EB', backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderWidth: 2, fill: true, tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#94A3B8' } } },
+            scales: {
+                y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(45,58,82,0.5)' } },
+                x: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(45,58,82,0.5)' } }
+            }
+        }
+    });
+
+    const protoCtx = document.getElementById('liveProtocolChart').getContext('2d');
+    new Chart(protoCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['HTTPS', 'HTTP', 'SSH', 'DNS', 'FTP', 'Others'],
+            datasets: [{
+                data: [45, 30, 6, 8, 3, 8],
+                backgroundColor: ['#2563EB', '#22C55E', '#8B5CF6', '#06B6D4', '#F59E0B', '#64748B'],
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true, cutout: '65%',
+            plugins: { legend: { position: 'bottom', labels: { color: '#94A3B8' } } }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block page_title %}AI Predictions{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0" style="color: var(--text-bright); font-weight:700;">
+            <i class="bi bi-robot me-2" style="color: var(--primary);"></i>AI Prediction Engine
+        </h4>
+        <p class="mb-0" style="font-size:0.82rem; color: var(--text-muted);">Machine learning model insights and historical confidence trends</p>
+    </div>
+    <div class="live-badge fs-6 px-3 py-2">
+        <span class="status-dot me-2" style="background: var(--success);"></span>MODEL ACTIVE
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-7">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-cpu"></i> AI Model Performance & Confidence Trend</span>
+            </div>
+            <div class="noc-card-body">
+                <canvas id="aiTrendChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-diagram-2"></i> Model Details</span>
+            </div>
+            <div class="noc-card-body">
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-color) !important;">
+                    <span class="text-muted">Algorithm</span>
+                    <span class="text-bright fw-bold">Random Forest Classifier</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-color) !important;">
+                    <span class="text-muted">Training Accuracy</span>
+                    <span class="text-success fw-bold">98.4%</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-color) !important;">
+                    <span class="text-muted">Features Used</span>
+                    <span class="text-info fw-bold">Latency, Packet Loss</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-color) !important;">
+                    <span class="text-muted">Current Inference Time</span>
+                    <span class="text-warning fw-bold">12ms</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Total Predictions Made</span>
+                    <span class="text-bright fw-bold">14,529</span>
+                </div>
+                <button class="btn-noc w-100 mt-2"><i class="bi bi-arrow-repeat"></i> Retrain Model</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="noc-card">
+    <div class="noc-card-header">
+        <span><i class="bi bi-list-check"></i> Recent AI Classifications</span>
+    </div>
+    <div class="noc-card-body p-0">
+        <div class="table-responsive">
+            <table class="noc-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Target IP</th>
+                        <th>Input Features (Lat / PL)</th>
+                        <th>Predicted State</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-muted">10:45 AM</td>
+                        <td class="mono">192.168.1.1</td>
+                        <td class="mono">12.5ms / 0.0%</td>
+                        <td><span class="status-badge status-online">Normal</span></td>
+                        <td><span class="text-success fw-bold">99.1%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">10:15 AM</td>
+                        <td class="mono">8.8.8.8</td>
+                        <td class="mono">450.0ms / 5.0%</td>
+                        <td><span class="status-badge status-warning">Network Congestion</span></td>
+                        <td><span class="text-success fw-bold">94.2%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">09:30 AM</td>
+                        <td class="mono">10.0.0.55</td>
+                        <td class="mono">Timeout / 100%</td>
+                        <td><span class="status-badge status-offline">Device Offline</span></td>
+                        <td><span class="text-success fw-bold">99.9%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const aiCtx = document.getElementById('aiTrendChart').getContext('2d');
+    new Chart(aiCtx, {
+        type: 'line',
+        data: {
+            labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+            datasets: [{
+                label: 'Average Confidence (%)',
+                data: [94.5, 95.1, 95.8, 96.2, 95.9, 97.4, 98.4],
+                borderColor: '#8B5CF6', backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderWidth: 2, fill: true, tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 90, max: 100, ticks: { color: '#94A3B8' }, grid: { color: 'rgba(45,58,82,0.5)' } },
+                x: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(45,58,82,0.5)' } }
+            }
+        }
+    });
+</script>
+{% endblock %}

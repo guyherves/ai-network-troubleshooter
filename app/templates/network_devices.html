@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block page_title %}Network Devices{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0" style="color: var(--text-bright); font-weight:700;">
+            <i class="bi bi-diagram-3 me-2" style="color: var(--primary);"></i>Network Devices
+        </h4>
+        <p class="mb-0" style="font-size:0.82rem; color: var(--text-muted);">Real-time device discovery and classification</p>
+    </div>
+    {% if current_user.is_authenticated and current_user.role != 'viewer' %}
+    <button class="btn-noc" onclick="scanNetwork()">
+        <i class="bi bi-search"></i> Discover Devices
+    </button>
+    {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="kpi-card kpi-success">
+            <div class="kpi-icon"><i class="bi bi-pc-display"></i></div>
+            <div>
+                <div class="kpi-label">Workstations</div>
+                <div class="kpi-value" id="kpi-workstations">--</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-info">
+            <div class="kpi-icon"><i class="bi bi-phone"></i></div>
+            <div>
+                <div class="kpi-label">Mobile Devices</div>
+                <div class="kpi-value" id="kpi-mobile">--</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-warning">
+            <div class="kpi-icon"><i class="bi bi-printer"></i></div>
+            <div>
+                <div class="kpi-label">Printers / IoT</div>
+                <div class="kpi-value" id="kpi-printers">--</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-danger">
+            <div class="kpi-icon"><i class="bi bi-question-circle"></i></div>
+            <div>
+                <div class="kpi-label">Unclassified</div>
+                <div class="kpi-value" id="kpi-unclassified">--</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="noc-card">
+    <div class="noc-card-header">
+        <span><i class="bi bi-hdd-network"></i> Discovered Network Devices</span>
+        <div class="d-flex gap-2">
+            <input type="text" class="noc-input" placeholder="Search devices..." style="padding: 2px 10px; width: 200px;">
+        </div>
+    </div>
+    <div class="noc-card-body" style="padding:0;">
+        <div class="table-responsive">
+            <table class="noc-table" id="discoveryTable">
+                <thead>
+                    <tr>
+                        <th>Hostname</th>
+                        <th>IP Address</th>
+                        <th>MAC Address</th>
+                        <th>AI Classification</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="discoveryResults">
+                    <!-- Data populated dynamically via JS -->
+                </tbody>
+            </table>
+        </div>
+        <div id="discoverLoading" class="text-center d-none my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Running full ARP scan...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+const currentUserRole = "{{ current_user.role if current_user.is_authenticated else 'viewer' }}";
+
+function fetchDevices() {
+    fetch('/api/devices')
+        .then(response => response.json())
+        .then(data => {
+            // Update KPIs
+            document.getElementById('kpi-workstations').innerText = data.metrics.workstations;
+            document.getElementById('kpi-mobile').innerText = data.metrics.mobile;
+            document.getElementById('kpi-printers').innerText = data.metrics.printers;
+            document.getElementById('kpi-unclassified').innerText = data.metrics.unclassified;
+            
+            // Update Table
+            const tbody = document.getElementById('discoveryResults');
+            tbody.innerHTML = '';
+            
+            data.devices.forEach(device => {
+                let statusBadge = 'status-online';
+                if (device.status === 'Offline') statusBadge = 'status-offline';
+                if (device.status === 'High Latency') statusBadge = 'status-warning';
+                
+                let blockBtnClass = '';
+                if (device.type === 'Unknown' || device.status === 'High Latency') {
+                    blockBtnClass = 'border-color: var(--danger); color: var(--danger);';
+                }
+                
+                let actionCell = `<td><button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem; ${blockBtnClass}">Block</button></td>`;
+                if (currentUserRole === 'viewer') {
+                    actionCell = `<td><button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem; opacity: 0.5; cursor: not-allowed;" disabled title="Viewers cannot block devices"><i class="bi bi-lock-fill me-1"></i>Block</button></td>`;
+                }
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><i class="bi ${device.icon} me-2 text-${device.color_class}"></i>${device.hostname}</td>
+                    <td class="mono">${device.ip}</td>
+                    <td class="mono">${device.mac}</td>
+                    <td><span class="status-badge status-${device.color_class}"><span class="status-dot"></span> ${device.type}</span></td>
+                    <td><span class="status-badge ${statusBadge}"><span class="status-dot"></span> ${device.status}</span></td>
+                    <td class="text-muted">${device.last_seen}</td>
+                    ${actionCell}
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => console.error("Error fetching devices:", err));
+}
+
+// Initial fetch
+fetchDevices();
+
+// Poll every 3 seconds for dynamic simulation effect
+setInterval(fetchDevices, 3000);
+
+function scanNetwork() {
+    document.getElementById('discoverLoading').classList.remove('d-none');
+    document.getElementById('discoveryTable').classList.add('d-none');
+    
+    setTimeout(() => {
+        fetchDevices();
+        document.getElementById('discoverLoading').classList.add('d-none');
+        document.getElementById('discoveryTable').classList.remove('d-none');
+    }, 1500);
+}
+</script>
+{% endblock %}

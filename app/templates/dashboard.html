@@ -1,0 +1,548 @@
+{% extends "base.html" %}
+{% block page_title %}Dashboard — Network Operations Center{% endblock %}
+{% block content %}
+
+<!-- ===== ROW 1: PAGE HEADER ===== -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0" style="color: var(--text-bright); font-weight:700;">
+            <i class="bi bi-speedometer2 me-2" style="color: var(--primary);"></i>Network Operations Center
+        </h4>
+        <p class="mb-0" style="font-size:0.82rem; color: var(--text-muted);">
+            Real-time AI-powered network monitoring and intrusion detection
+        </p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <span class="live-badge">LIVE</span>
+        {% if current_user.is_authenticated and current_user.role != 'viewer' %}
+        <button class="btn-noc-outline" data-bs-toggle="modal" data-bs-target="#networkToolsModal">
+            <i class="bi bi-tools"></i> Network Tools
+        </button>
+        <button class="btn-noc" id="btnMonitor">
+            <i class="bi bi-play-fill"></i> Run Diagnostics
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ===== TARGET IP ROW ===== -->
+<div class="noc-card mb-4">
+    <div class="noc-card-body d-flex align-items-center gap-3" style="padding: 14px 18px;">
+        <i class="bi bi-crosshair" style="color: var(--primary); font-size:1.1rem;"></i>
+        <span style="font-size:0.85rem; color: var(--text-muted); white-space: nowrap;">Target IP / Hostname</span>
+        <input type="text" class="noc-input" id="targetIp" value="8.8.8.8" style="max-width:240px;">
+        <div id="loadingIndicator" class="d-none d-flex align-items-center gap-2">
+            <div class="spinner-border text-primary" style="width:1.2rem; height:1.2rem; border-width:2px;" role="status"></div>
+            <span style="font-size:0.82rem; color: var(--text-muted);">AI analyzing...</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ROW 2: 8 KPI CARDS ===== -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3 col-xl-3">
+        <div class="kpi-card kpi-success">
+            <div class="kpi-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+                <div class="kpi-label">Devices Online</div>
+                <div class="kpi-value" id="kpi-online">26</div>
+                <div class="kpi-trend"><i class="bi bi-arrow-up-right text-success"></i> +2 today</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-xl-3">
+        <div class="kpi-card kpi-danger">
+            <div class="kpi-icon"><i class="bi bi-x-circle-fill"></i></div>
+            <div>
+                <div class="kpi-label">Devices Offline</div>
+                <div class="kpi-value" id="kpi-offline">2</div>
+                <div class="kpi-trend"><i class="bi bi-arrow-down-right text-success"></i> -1 today</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-xl-3">
+        <div class="kpi-card kpi-primary">
+            <div class="kpi-icon"><i class="bi bi-hdd-network-fill"></i></div>
+            <div>
+                <div class="kpi-label">Total Devices</div>
+                <div class="kpi-value" id="kpi-total">35</div>
+                <div class="kpi-trend">Monitored</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-xl-3">
+        <div class="kpi-card kpi-warning">
+            <div class="kpi-icon"><i class="bi bi-bell-fill"></i></div>
+            <div>
+                <div class="kpi-label">Active Alerts</div>
+                <div class="kpi-value" id="kpi-alerts">3</div>
+                <div class="kpi-trend"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Needs attention</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-xl-3">
+        <div class="kpi-card kpi-danger">
+            <div class="kpi-icon"><i class="bi bi-shield-fill-exclamation"></i></div>
+            <div>
+                <div class="kpi-label">AI Threat Score</div>
+                <div class="kpi-value" id="kpi-threat">18%</div>
+                <div class="kpi-trend"><i class="bi bi-robot text-info"></i> Low Risk</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-xl-3">
+        <div class="kpi-card kpi-info">
+            <div class="kpi-icon"><i class="bi bi-activity"></i></div>
+            <div>
+                <div class="kpi-label">Latency</div>
+                <div class="kpi-value" id="valLatency">-- ms</div>
+                <div class="kpi-trend">Last scan result</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-xl-3">
+        <div class="kpi-card kpi-purple">
+            <div class="kpi-icon"><i class="bi bi-wifi"></i></div>
+            <div>
+                <div class="kpi-label">Bandwidth</div>
+                <div class="kpi-value" id="kpi-bandwidth">240 Mbps</div>
+                <div class="kpi-trend">Peak today: 512 Mbps</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-xl-3">
+        <div class="kpi-card kpi-success">
+            <div class="kpi-icon"><i class="bi bi-clock-history"></i></div>
+            <div>
+                <div class="kpi-label">Network Uptime</div>
+                <div class="kpi-value" id="kpi-uptime">99.8%</div>
+                <div class="kpi-trend">Last 30 days</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ROW 3: AI THREAT PANEL + ALERTS ===== -->
+<div class="row g-3 mb-4">
+    <!-- AI Threat Panel -->
+    <div class="col-md-8">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-robot"></i> AI Threat Prediction Engine</span>
+                <span class="live-badge">AI ACTIVE</span>
+            </div>
+            <div class="noc-card-body">
+                <div id="aiResultsPanel">
+                    <div class="d-flex align-items-center gap-4 mb-4">
+                        <div class="threat-level-ring ring-low" id="threatRing">18%</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span style="font-size:0.82rem; color: var(--text-muted);">AI Confidence</span>
+                                <span style="font-size:0.82rem; color: var(--success);" id="aiConfidence">96%</span>
+                            </div>
+                            <div class="confidence-bar-bg mb-3">
+                                <div class="confidence-bar-fill" id="confidenceBar" style="width:96%;"></div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div style="font-size:0.72rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Risk Level</div>
+                                    <div style="color: var(--success); font-weight:700;" id="aiRiskLevel">🟢 Low</div>
+                                </div>
+                                <div class="col-6">
+                                    <div style="font-size:0.72rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Possible Cause</div>
+                                    <div style="color: var(--text-main); font-weight:600;" id="aiIssue">No Scan Run Yet</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-color); padding-top:14px;">
+                        <div style="font-size:0.75rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">AI Recommendations</div>
+                        <div id="aiRecommendationList">
+                            <div class="d-flex align-items-start gap-2 mb-2">
+                                <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                                <span style="font-size:0.875rem;" id="aiRecommendation">Click "Run Diagnostics" to analyze the network state.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Alerts Feed -->
+    <div class="col-md-4">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-bell-fill"></i> Recent Alerts</span>
+                <span class="status-badge status-warning" id="alertCount">3 active</span>
+            </div>
+            <div class="noc-card-body" style="padding: 8px 14px;">
+                <div id="alertsFeed">
+                    <div class="alert-item">
+                        <span class="alert-severity sev-high">HIGH</span>
+                        <div>
+                            <div class="alert-msg">Unauthorized Login Attempt</div>
+                            <div class="alert-time"><i class="bi bi-clock me-1"></i>10:20 AM</div>
+                        </div>
+                    </div>
+                    <div class="alert-item">
+                        <span class="alert-severity sev-medium">MED</span>
+                        <div>
+                            <div class="alert-msg">Packet Loss > 10%</div>
+                            <div class="alert-time"><i class="bi bi-clock me-1"></i>10:15 AM</div>
+                        </div>
+                    </div>
+                    <div class="alert-item">
+                        <span class="alert-severity sev-medium">MED</span>
+                        <div>
+                            <div class="alert-msg">Bandwidth Spike Detected</div>
+                            <div class="alert-time"><i class="bi bi-clock me-1"></i>09:55 AM</div>
+                        </div>
+                    </div>
+                    <div class="alert-item">
+                        <span class="alert-severity sev-low">LOW</span>
+                        <div>
+                            <div class="alert-msg">Unknown Device Connected</div>
+                            <div class="alert-time"><i class="bi bi-clock me-1"></i>09:40 AM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ROW 4: CHARTS ===== -->
+<div class="row g-3 mb-4">
+    <!-- Diagnostics History Chart -->
+    <div class="col-md-5">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-graph-up"></i> Diagnostics History</span>
+                <span class="live-badge">LIVE</span>
+            </div>
+            <div class="noc-card-body">
+                <canvas id="networkChart" height="170"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- Traffic Protocol Chart -->
+    <div class="col-md-4">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-pie-chart-fill"></i> Traffic Protocols</span>
+            </div>
+            <div class="noc-card-body">
+                <canvas id="protocolChart" height="170"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- Device Classification Chart -->
+    <div class="col-md-3">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-cpu"></i> Device Types</span>
+            </div>
+            <div class="noc-card-body">
+                <canvas id="deviceTypeChart" height="170"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ROW 5: TOPOLOGY + LIVE SERVER ===== -->
+<div class="row g-3 mb-4">
+    <!-- Network Topology -->
+    <div class="col-md-7">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-diagram-3"></i> Network Topology Map</span>
+                <button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem;" onclick="refreshTopology()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div class="noc-card-body" style="padding:10px;">
+                <div id="topology-container"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Live Server Stats -->
+    <div class="col-md-5">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-cpu-fill"></i> Live Server Resources</span>
+                <span class="live-badge">LIVE</span>
+            </div>
+            <div class="noc-card-body">
+                <canvas id="serverStatsChart" height="170"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ROW 6: CONNECTED DEVICES TABLE ===== -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="noc-card">
+            <div class="noc-card-header">
+                <span><i class="bi bi-table"></i> Connected Devices</span>
+                <div class="d-flex gap-2">
+                    <span class="status-badge status-online" id="totalDeviceBadge">35 devices</span>
+                </div>
+            </div>
+            <div class="noc-card-body" style="padding:0;">
+                <div class="table-responsive">
+                    <table class="noc-table">
+                        <thead>
+                            <tr>
+                                <th>Device</th>
+                                <th>IP Address</th>
+                                <th>MAC Address</th>
+                                <th>Type (AI)</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devicesTableBody">
+                            <tr>
+                                <td><i class="bi bi-laptop me-2 text-primary"></i>PC-01</td>
+                                <td class="mono">192.168.1.2</td>
+                                <td class="mono">A4:C3:F0:11:22:33</td>
+                                <td><span class="status-badge status-online"><span class="status-dot"></span> Laptop</span></td>
+                                <td><span class="status-badge status-online"><span class="status-dot"></span> Online</span></td>
+                                <td><button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem;" onclick="setTarget('192.168.1.2')">Diagnose</button></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-printer me-2 text-warning"></i>Printer-01</td>
+                                <td class="mono">192.168.1.5</td>
+                                <td class="mono">B8:27:EB:44:55:66</td>
+                                <td><span class="status-badge status-warning"><span class="status-dot"></span> Printer</span></td>
+                                <td><span class="status-badge status-online"><span class="status-dot"></span> Online</span></td>
+                                <td><button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem;" onclick="setTarget('192.168.1.5')">Diagnose</button></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-question-circle me-2 text-danger"></i>Unknown-01</td>
+                                <td class="mono">192.168.1.8</td>
+                                <td class="mono">DE:AD:BE:EF:00:01</td>
+                                <td><span class="status-badge status-offline"><span class="status-dot"></span> Unknown</span></td>
+                                <td><span class="status-badge status-offline"><span class="status-dot"></span> Offline</span></td>
+                                <td><button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem;" onclick="setTarget('192.168.1.8')">Diagnose</button></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-phone me-2 text-info"></i>Mobile-01</td>
+                                <td class="mono">192.168.1.12</td>
+                                <td class="mono">F0:DE:F1:77:88:99</td>
+                                <td><span class="status-badge status-online"><span class="status-dot"></span> Phone</span></td>
+                                <td><span class="status-badge status-online"><span class="status-dot"></span> Online</span></td>
+                                <td><button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem;" onclick="setTarget('192.168.1.12')">Diagnose</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ROW 7: SPEED TEST + WATCHLIST ===== -->
+<div class="row g-3 mb-4">
+    <!-- Speed Test -->
+    <div class="col-md-6">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-speedometer"></i> Internet Speed Test</span>
+            </div>
+            <div class="noc-card-body text-center">
+                <div id="speedTestResults" class="mb-3" style="display:none;">
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div style="font-size:1.6rem; font-weight:800; color: var(--warning);" id="stPing">--</div>
+                            <div style="font-size:0.72rem; color: var(--text-muted);">Ping (ms)</div>
+                        </div>
+                        <div class="col-4">
+                            <div style="font-size:1.6rem; font-weight:800; color: var(--success);" id="stDownload">--</div>
+                            <div style="font-size:0.72rem; color: var(--text-muted);">Download (Mbps)</div>
+                        </div>
+                        <div class="col-4">
+                            <div style="font-size:1.6rem; font-weight:800; color: var(--info);" id="stUpload">--</div>
+                            <div style="font-size:0.72rem; color: var(--text-muted);">Upload (Mbps)</div>
+                        </div>
+                    </div>
+                </div>
+                <button id="btnSpeedTest" class="btn-noc w-100" onclick="runSpeedTest()">
+                    <i class="bi bi-play-circle"></i> Run Speed Test
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Watchlist -->
+    <div class="col-md-6">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-eye-fill"></i> Background Monitoring Watchlist</span>
+            </div>
+            <div class="noc-card-body">
+                <div class="d-flex gap-2 mb-3">
+                    <input type="text" id="watchlistIp" class="noc-input" placeholder="Enter IP (e.g. 192.168.1.1)">
+                    <button class="btn-noc" onclick="addToWatchlist()"><i class="bi bi-plus-lg"></i> Add</button>
+                </div>
+                <ul class="list-group list-group-flush" id="watchlistList" style="max-height: 140px; overflow-y: auto;"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== NETWORK TOOLS MODAL ===== -->
+<div class="modal fade" id="networkToolsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="color: var(--text-bright);"><i class="bi bi-tools me-2"></i> Advanced Network Tools</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="nav nav-tabs" id="toolsTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="discover-tab" data-bs-toggle="tab" data-bs-target="#discover" type="button">Device Discovery</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="portscan-tab" data-bs-toggle="tab" data-bs-target="#portscan" type="button">Port Scanner</button>
+          </li>
+        </ul>
+        <div class="tab-content p-3" id="toolsTabsContent" style="border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px;">
+          <div class="tab-pane fade show active" id="discover" role="tabpanel">
+            <p style="color: var(--text-muted); font-size:0.875rem;" class="mb-3">Scan your local network (ARP table) to find connected devices.</p>
+            <button class="btn-noc mb-3" id="btnScanNetwork" onclick="scanNetwork()"><i class="bi bi-search"></i> Discover Devices</button>
+            <div class="table-responsive">
+                <table class="noc-table d-none" id="discoveryTable">
+                    <thead><tr><th>IP Address</th><th>MAC Address</th><th>Action</th></tr></thead>
+                    <tbody id="discoveryResults"></tbody>
+                </table>
+            </div>
+            <div id="discoverLoading" class="text-center d-none my-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2" style="color: var(--text-muted);">Scanning network...</p>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="portscan" role="tabpanel">
+            <p style="color: var(--text-muted); font-size:0.875rem;" class="mb-3">Check common open ports on a specific IP address.</p>
+            <div class="d-flex gap-2 mb-3">
+                <input type="text" class="noc-input" id="portScanIp" placeholder="e.g. 192.168.1.1" value="127.0.0.1">
+                <button class="btn-noc" id="btnPortScan" onclick="runPortScan()"><i class="bi bi-shield-check"></i> Scan</button>
+            </div>
+            <div class="row mt-3 d-none" id="portScanResults"></div>
+            <div id="portScanLoading" class="text-center d-none my-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2" style="color: var(--text-muted);">Scanning ports...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/vis-network@9.1.9/dist/vis-network.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/vis-network@9.1.9/dist/dist/vis-network.min.css" />
+<script>
+// ===== TOPOLOGY MAP =====
+const TOPOLOGY_NODES = [
+    { id: 1,  label: 'Internet',    shape: 'icon', icon: { face: 'bootstrap-icons', code: '\uF6E7', size: 40, color: '#64748B' } },
+    { id: 2,  label: 'Firewall',    shape: 'icon', icon: { face: 'bootstrap-icons', code: '\uF52F', size: 40, color: '#EF4444' } },
+    { id: 3,  label: 'Main Router', shape: 'icon', icon: { face: 'bootstrap-icons', code: '\uF6C6', size: 40, color: '#2563EB' } },
+    { id: 4,  label: 'Switch',      shape: 'icon', icon: { face: 'bootstrap-icons', code: '\uF6C6', size: 35, color: '#8B5CF6' } },
+    { id: 5,  label: 'PC-01\n🟢', color: { background: '#1E293B', border: '#22C55E' }, shape: 'box' },
+    { id: 6,  label: 'PC-02\n🟢', color: { background: '#1E293B', border: '#22C55E' }, shape: 'box' },
+    { id: 7,  label: 'Server\n🟢', color: { background: '#1E293B', border: '#22C55E' }, shape: 'box' },
+    { id: 8,  label: 'Printer\n🟢',color: { background: '#1E293B', border: '#F59E0B' }, shape: 'box' },
+    { id: 9,  label: 'Laptop\n🟢', color: { background: '#1E293B', border: '#22C55E' }, shape: 'box' },
+    { id: 10, label: 'Unknown\n🔴',  color: { background: '#1E293B', border: '#EF4444' }, shape: 'box' },
+];
+const TOPOLOGY_EDGES = [
+    { from: 1, to: 2 }, { from: 2, to: 3 },
+    { from: 3, to: 4 }, { from: 3, to: 5 }, { from: 3, to: 6 },
+    { from: 3, to: 7 }, { from: 4, to: 8 }, { from: 4, to: 9 }, { from: 4, to: 10 },
+];
+
+function refreshTopology() {
+    const container = document.getElementById('topology-container');
+    const data = { nodes: new vis.DataSet(TOPOLOGY_NODES), edges: new vis.DataSet(TOPOLOGY_EDGES) };
+    const options = {
+        nodes: {
+            font: { color: '#E2E8F0', size: 11 },
+            color: { background: '#1E293B', border: '#2563EB', highlight: { border: '#22C55E', background: '#162032' } },
+            borderWidth: 2, margin: 8,
+        },
+        edges: { color: { color: '#2D3A52' }, width: 2, arrows: { to: { enabled: true, scaleFactor: 0.5 } } },
+        physics: { stabilization: { iterations: 100 } },
+        interaction: { zoomView: false },
+        layout: { hierarchical: { direction: 'UD', sortMethod: 'directed', levelSeparation: 80 } }
+    };
+    new vis.Network(container, data, options);
+}
+
+// ===== PROTOCOL CHART =====
+const protocolCtx = document.getElementById('protocolChart').getContext('2d');
+new Chart(protocolCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['HTTPS', 'HTTP', 'SSH', 'DNS', 'FTP', 'Others'],
+        datasets: [{
+            data: [45, 30, 6, 8, 3, 8],
+            backgroundColor: ['#2563EB', '#22C55E', '#8B5CF6', '#06B6D4', '#F59E0B', '#64748B'],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true, cutout: '65%',
+        plugins: {
+            legend: { position: 'right', labels: { color: '#94A3B8', boxWidth: 10, font: { size: 11 } } }
+        }
+    }
+});
+
+// ===== DEVICE TYPE CHART =====
+const deviceCtx = document.getElementById('deviceTypeChart').getContext('2d');
+new Chart(deviceCtx, {
+    type: 'pie',
+    data: {
+        labels: ['Laptop', 'Phone', 'Printer', 'IoT', 'Unknown'],
+        datasets: [{
+            data: [7, 9, 2, 3, 1],
+            backgroundColor: ['#2563EB','#22C55E','#F59E0B','#06B6D4','#EF4444'],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#94A3B8', boxWidth: 10, font: { size: 10 } } }
+        }
+    }
+});
+
+// ===== SET TARGET FROM TABLE =====
+function setTarget(ip) {
+    document.getElementById('targetIp').value = ip;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('Target set to ' + ip, 'primary');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    refreshTopology();
+    loadWatchlist();
+    // Update footer latency from KPI
+    const latEl = document.getElementById('valLatency');
+    if(latEl) {
+        const obs = new MutationObserver(() => {
+            document.getElementById('f-latency').textContent = latEl.textContent;
+        });
+        obs.observe(latEl, { childList: true, characterData: true, subtree: true });
+    }
+});
+</script>
+{% endblock %}

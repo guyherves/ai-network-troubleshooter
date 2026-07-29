@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block page_title %}Intrusion Detection{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0" style="color: var(--text-bright); font-weight:700;">
+            <i class="bi bi-shield-exclamation me-2" style="color: var(--danger);"></i>Intrusion Detection System (IDS)
+        </h4>
+        <p class="mb-0" style="font-size:0.82rem; color: var(--text-muted);">Real-time monitoring of firewall hits and malicious patterns</p>
+    </div>
+    <div class="live-badge fs-6 px-3 py-2" style="background: var(--danger-glow); color: var(--danger);">
+        <span class="status-dot me-2" style="background: var(--danger);"></span>SHIELD ACTIVE
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="kpi-card kpi-danger">
+            <div class="kpi-icon"><i class="bi bi-shield-slash"></i></div>
+            <div>
+                <div class="kpi-label">Blocked Threats</div>
+                <div class="kpi-value">29</div>
+                <div class="kpi-trend">Past 24 hours</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-warning">
+            <div class="kpi-icon"><i class="bi bi-sign-stop"></i></div>
+            <div>
+                <div class="kpi-label">Port Scans Stopped</div>
+                <div class="kpi-value">14</div>
+                <div class="kpi-trend">Past 24 hours</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-info">
+            <div class="kpi-icon"><i class="bi bi-door-closed"></i></div>
+            <div>
+                <div class="kpi-label">Failed Logins</div>
+                <div class="kpi-value">112</div>
+                <div class="kpi-trend">Past 24 hours</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-success">
+            <div class="kpi-icon"><i class="bi bi-shield-check"></i></div>
+            <div>
+                <div class="kpi-label">IPS Status</div>
+                <div class="kpi-value">Online</div>
+                <div class="kpi-trend">Fully operational</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-12">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-terminal"></i> Live Security Event Log</span>
+                <button class="btn-noc-outline" style="padding: 2px 10px; font-size: 0.75rem;">Export Logs</button>
+            </div>
+            <div class="noc-card-body p-0">
+                <div class="table-responsive">
+                    <table class="noc-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Source IP</th>
+                                <th>Target Port</th>
+                                <th>Event Type</th>
+                                <th>Severity</th>
+                                <th>Action Taken</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-muted">10:45:22 AM</td>
+                                <td class="mono" style="color: var(--danger);">193.186.4.15</td>
+                                <td class="mono">22 (SSH)</td>
+                                <td>Brute Force Attempt</td>
+                                <td><span class="status-badge status-offline">CRITICAL</span></td>
+                                <td><span class="status-badge status-offline">IP Blocked</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">10:42:10 AM</td>
+                                <td class="mono" style="color: var(--danger);">45.66.12.99</td>
+                                <td class="mono">All</td>
+                                <td>SYN Flood (DDoS)</td>
+                                <td><span class="status-badge status-offline">CRITICAL</span></td>
+                                <td><span class="status-badge status-warning">Rate Limited</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">10:20:05 AM</td>
+                                <td class="mono" style="color: var(--warning);">112.54.33.22</td>
+                                <td class="mono">80 (HTTP)</td>
+                                <td>SQL Injection Payload</td>
+                                <td><span class="status-badge status-warning">HIGH</span></td>
+                                <td><span class="status-badge status-offline">Connection Dropped</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">09:55:12 AM</td>
+                                <td class="mono" style="color: var(--warning);">88.142.5.66</td>
+                                <td class="mono">Multiple</td>
+                                <td>Sequential Port Scan</td>
+                                <td><span class="status-badge status-warning">HIGH</span></td>
+                                <td><span class="status-badge status-offline">IP Blocked</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">09:15:30 AM</td>
+                                <td class="mono" style="color: var(--info);">192.168.1.105</td>
+                                <td class="mono">445 (SMB)</td>
+                                <td>Unauthorized Access Attempt</td>
+                                <td><span class="status-badge status-online">MEDIUM</span></td>
+                                <td><span class="status-badge status-warning">Alert Generated</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

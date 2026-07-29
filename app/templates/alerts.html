@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block page_title %}System Alerts{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0" style="color: var(--text-bright); font-weight:700;">
+            <i class="bi bi-bell me-2" style="color: var(--primary);"></i>System Alerts
+        </h4>
+        <p class="mb-0" style="font-size:0.82rem; color: var(--text-muted);">Comprehensive log of network notifications and warnings</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn-noc-outline text-success border-success" onclick="markAllRead()">
+            <i class="bi bi-check2-all"></i> Mark All Read
+        </button>
+        <button class="btn-noc" style="background: var(--danger);" onclick="clearHistory()">
+            <i class="bi bi-trash"></i> Clear History
+        </button>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="noc-card h-100 p-3 text-center border-danger">
+            <div style="font-size: 2.5rem; color: var(--danger); font-weight: 800; line-height: 1;">{{ stats.high }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-top: 5px;">High Severity</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="noc-card h-100 p-3 text-center border-warning">
+            <div style="font-size: 2.5rem; color: var(--warning); font-weight: 800; line-height: 1;">{{ stats.medium }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-top: 5px;">Medium Severity</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="noc-card h-100 p-3 text-center border-info">
+            <div style="font-size: 2.5rem; color: var(--info); font-weight: 800; line-height: 1;">{{ stats.low }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-top: 5px;">Low Severity</div>
+        </div>
+    </div>
+</div>
+
+<div class="noc-card">
+    <div class="noc-card-header">
+        <span><i class="bi bi-list-ul"></i> Alert History</span>
+        <div class="d-flex gap-2">
+            <select class="noc-input" style="padding: 2px 10px; width: auto; font-size: 0.75rem;">
+                <option>All Severities</option>
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+            </select>
+        </div>
+    </div>
+    <div class="noc-card-body p-0">
+        <div class="table-responsive">
+            <table class="noc-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Severity</th>
+                        <th>Category</th>
+                        <th>Message</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr>
+                        <td class="text-muted">{{ alert.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if alert.severity == 'High' %}
+                            <span class="alert-severity sev-high">HIGH</span>
+                            {% elif alert.severity == 'Medium' %}
+                            <span class="alert-severity sev-medium">MED</span>
+                            {% else %}
+                            <span class="alert-severity sev-low">LOW</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ alert.category }}</td>
+                        <td><strong class="text-bright">{{ alert.message }}</strong></td>
+                        <td>
+                            {% if alert.status == 'Unresolved' %}
+                            <span class="status-badge status-warning">Unresolved</span>
+                            {% else %}
+                            <span class="status-badge status-online">Resolved</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if alert.status == 'Unresolved' %}
+                            <button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem;" onclick="acknowledgeAlert({{ alert.id }})">Acknowledge</button>
+                            {% else %}
+                            <button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem;" disabled>Resolved</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No alerts in history.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function acknowledgeAlert(id) {
+    fetch(`/api/alerts/acknowledge/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => location.reload());
+}
+function markAllRead() {
+    fetch(`/api/alerts/mark_all_read`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => location.reload());
+}
+function clearHistory() {
+    if(confirm('Are you sure you want to clear all alert history?')) {
+        fetch(`/api/alerts/clear`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => location.reload());
+    }
+}
+</script>
+{% endblock %}
