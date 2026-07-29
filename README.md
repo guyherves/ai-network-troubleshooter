@@ -1,21 +1,26 @@
 # AI-Based Network Troubleshooting System
 
-An intelligent web application that automatically monitors network health and uses Machine Learning to diagnose and recommend solutions for network issues. Built as a Final Year Project using Python, Flask, and Scikit-Learn.
+![Python](https://img.shields.io/badge/Python-3.x-blue?style=for-the-badge&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-Web%20Framework-black?style=for-the-badge&logo=flask&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-Machine%20Learning-orange?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5-purple?style=for-the-badge&logo=bootstrap&logoColor=white)
 
-## Features
+> An AI-Based Network Troubleshooting System that uses Machine Learning to monitor network health in real-time. Built with Flask, it autonomously detects anomalies like DDoS attacks or congestion and provides intelligent, actionable recommendations for IT administrators.
+
+## ✨ Features
 
 - **Real-Time Network Monitoring**: Continuously measures latency, packet loss, bandwidth usage, and hardware metrics (CPU/RAM).
 - **AI-Powered Diagnostics**: Uses a trained Random Forest model to classify the network state (e.g., Normal, High Latency, Congestion, Device Offline).
 - **Actionable Recommendations**: Provides automated troubleshooting steps based on the AI's diagnosis.
-- **Admin Dashboard**: A clean, responsive Bootstrap 5 interface to trigger diagnostics and view results instantly.
+- **Premium Admin Dashboard**: A clean, responsive Bootstrap 5 interface with dark/light modes and glassmorphism styling to trigger diagnostics and view results instantly.
 - **Troubleshooting History**: Maintains a log of all past diagnostic runs for auditing and historical analysis.
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 - **Backend**: Python 3, Flask, SQLAlchemy
 - **Machine Learning**: Scikit-Learn, Pandas, NumPy
 - **Monitoring**: `ping3`, `psutil`
-- **Frontend**: HTML5, CSS3, Bootstrap 5, JavaScript
+- **Frontend**: HTML5, CSS3, Bootstrap 5, Chart.js
 - **Database**: SQLite (Configurable to MySQL)
 
 ## Installation & Setup
