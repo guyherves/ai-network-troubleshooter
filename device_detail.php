@@ -101,7 +101,7 @@ $stmtEvents->execute([':id' => $device['id'], ':ip' => $device['ip_address']]);
 $deviceEvents = $stmtEvents->fetchAll();
 
 $pageTitle = "Device: " . ($device['hostname'] ?: $device['ip_address']);
-include_once __DIR__ . '/header.php';
+include_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">

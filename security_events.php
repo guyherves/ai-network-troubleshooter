@@ -42,7 +42,7 @@ $medCount  = (int)$pdo->query("SELECT COUNT(*) FROM security_event WHERE severit
 $lowCount  = (int)$pdo->query("SELECT COUNT(*) FROM security_event WHERE severity = 'Low'")->fetchColumn();
 $totalCount = (int)$pdo->query("SELECT COUNT(*) FROM security_event")->fetchColumn();
 
-include_once __DIR__ . '/header.php';
+include_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container-fluid px-4 py-3">
@@ -172,4 +172,4 @@ function runIdsScan() {
 }
 </script>
 
-<?php include_once __DIR__ . '/footer.php'; ?>
+<?php include_once __DIR__ . '/includes/footer.php'; ?>
