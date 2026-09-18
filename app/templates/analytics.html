@@ -14,7 +14,7 @@
             <option>Last 30 Days</option>
             <option>This Year</option>
         </select>
-        <button class="btn-noc"><i class="bi bi-download"></i> Generate Report</button>
+        <a href="{{ url_for('main.export_report') }}" class="btn-noc text-decoration-none"><i class="bi bi-download"></i> Generate Report</a>
     </div>
 </div>
 
@@ -36,7 +36,7 @@
                     <div class="noc-card-body d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Total Uptime</div>
-                            <div class="fs-3 fw-bold text-success">99.98%</div>
+                            <div class="fs-3 fw-bold text-success" id="analytics-uptime">--</div>
                         </div>
                         <i class="bi bi-arrow-up-right-circle text-success fs-1 opacity-50"></i>
                     </div>
@@ -47,7 +47,7 @@
                     <div class="noc-card-body d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Data Transferred</div>
-                            <div class="fs-3 fw-bold text-primary">4.2 TB</div>
+                            <div class="fs-3 fw-bold text-primary" id="analytics-data">--</div>
                         </div>
                         <i class="bi bi-hdd-stack text-primary fs-1 opacity-50"></i>
                     </div>
@@ -64,22 +64,9 @@
                 <span><i class="bi bi-shield-lock"></i> Top Blocked IP Addresses</span>
             </div>
             <div class="noc-card-body p-0">
-                <ul class="list-group list-group-flush" style="background: transparent;">
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
-                        <div><i class="bi bi-globe me-2 text-muted"></i> <span class="mono">193.186.4.15</span> <small class="text-muted ms-2">(Russia)</small></div>
-                        <span class="badge bg-danger rounded-pill">1,204 hits</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
-                        <div><i class="bi bi-globe me-2 text-muted"></i> <span class="mono">45.66.12.99</span> <small class="text-muted ms-2">(China)</small></div>
-                        <span class="badge bg-danger rounded-pill">855 hits</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
-                        <div><i class="bi bi-globe me-2 text-muted"></i> <span class="mono">112.54.33.22</span> <small class="text-muted ms-2">(Unknown)</small></div>
-                        <span class="badge bg-warning text-dark rounded-pill">432 hits</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
-                        <div><i class="bi bi-globe me-2 text-muted"></i> <span class="mono">88.142.5.66</span> <small class="text-muted ms-2">(Brazil)</small></div>
-                        <span class="badge bg-warning text-dark rounded-pill">120 hits</span>
+                <ul class="list-group list-group-flush" id="topBlockedIpsList" style="background: transparent;">
+                    <li class="list-group-item text-center py-4 text-muted" style="background: transparent;">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading...
                     </li>
                 </ul>
             </div>
@@ -91,22 +78,9 @@
                 <span><i class="bi bi-hdd-network"></i> Most Active Internal Devices</span>
             </div>
             <div class="noc-card-body p-0">
-                <ul class="list-group list-group-flush" style="background: transparent;">
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
-                        <div><i class="bi bi-server me-2 text-primary"></i> Main Database Server <br><small class="text-muted mono">192.168.1.10</small></div>
-                        <span class="text-bright fw-bold">1.2 TB</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
-                        <div><i class="bi bi-laptop me-2 text-success"></i> Admin Workstation <br><small class="text-muted mono">192.168.1.101</small></div>
-                        <span class="text-bright fw-bold">450 GB</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
-                        <div><i class="bi bi-camera-video me-2 text-warning"></i> Security Camera 01 <br><small class="text-muted mono">192.168.1.50</small></div>
-                        <span class="text-bright fw-bold">320 GB</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
-                        <div><i class="bi bi-router me-2 text-info"></i> Guest WiFi AP <br><small class="text-muted mono">192.168.1.2</small></div>
-                        <span class="text-bright fw-bold">180 GB</span>
+                <ul class="list-group list-group-flush" id="topDevicesList" style="background: transparent;">
+                    <li class="list-group-item text-center py-4 text-muted" style="background: transparent;">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading...
                     </li>
                 </ul>
             </div>
@@ -118,13 +92,13 @@
 {% block scripts %}
 <script>
     const latCtx = document.getElementById('analyticsLatencyChart').getContext('2d');
-    new Chart(latCtx, {
+    let latencyChart = new Chart(latCtx, {
         type: 'line',
         data: {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
             datasets: [{
                 label: 'Avg Latency (ms)',
-                data: [14, 15, 12, 18, 13, 11, 12],
+                data: [],
                 borderColor: '#06B6D4', backgroundColor: 'rgba(6, 182, 212, 0.1)',
                 borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#06B6D4'
             }]
@@ -138,5 +112,45 @@
             }
         }
     });
+
+    function fetchAnalytics() {
+        fetch('/api/analytics_data')
+            .then(res => res.json())
+            .then(data => {
+                // Update chart
+                latencyChart.data.datasets[0].data = data.latency;
+                latencyChart.update();
+                
+                // Update KPIs
+                document.getElementById('analytics-uptime').innerText = data.uptime;
+                document.getElementById('analytics-data').innerText = data.total_data;
+                
+                // Update Top IPs
+                const ipList = document.getElementById('topBlockedIpsList');
+                ipList.innerHTML = '';
+                data.top_ips.forEach(ip => {
+                    ipList.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
+                        <div><i class="bi bi-globe me-2 text-muted"></i> <span class="mono">${ip.ip}</span> <small class="text-muted ms-2">(${ip.country})</small></div>
+                        <span class="badge ${ip.badge} rounded-pill">${ip.hits} hits</span>
+                    </li>`;
+                });
+                
+                // Update Top Devices
+                const devList = document.getElementById('topDevicesList');
+                devList.innerHTML = '';
+                data.top_devices.forEach(dev => {
+                    devList.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: var(--border-color);">
+                        <div><i class="bi ${dev.icon} me-2"></i> ${dev.name} <br><small class="text-muted mono">${dev.ip}</small></div>
+                        <span class="text-bright fw-bold">${dev.data}</span>
+                    </li>`;
+                });
+            })
+            .catch(err => console.error(err));
+    }
+    
+    fetchAnalytics();
+    setInterval(fetchAnalytics, 10000);
 </script>
 {% endblock %}

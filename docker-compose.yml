@@ -1,0 +1,124 @@
+version: '3.9'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: network_ids_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-mysql}
+      MYSQL_DATABASE: ${DB_NAME:-network_troubleshooting}
+      MYSQL_USER: ${DB_USER:-root}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-mysql}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - network_ids
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:7-alpine
+    container_name: network_ids_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - network_ids
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: network_ids_app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      FLASK_ENV: ${FLASK_ENV:-development}
+      FLASK_DEBUG: ${FLASK_DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      DATABASE_URL: mysql+pymysql://${DB_USER:-root}:${DB_PASSWORD:-mysql}@mysql:3306/${DB_NAME:-network_troubleshooting}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-mysql}
+      DB_NAME: ${DB_NAME:-network_troubleshooting}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MAIL_SERVER: ${MAIL_SERVER:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-False}
+      RATELIMIT_ENABLED: ${RATELIMIT_ENABLED:-True}
+      ENABLE_PACKET_SNIFFER: ${ENABLE_PACKET_SNIFFER:-True}
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app:/app/app:ro
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+      - ./config.py:/app/config.py:ro
+      - ./run.py:/app/run.py:ro
+      - logs:/app/logs
+    networks:
+      - network_ids
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  nginx:
+    image: nginx:alpine
+    container_name: network_ids_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx_cache:/var/cache/nginx
+    networks:
+      - network_ids
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  logs:
+    driver: local
+  nginx_cache:
+    driver: local
+
+networks:
+  network_ids:
+    driver: bridge

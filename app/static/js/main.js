@@ -20,10 +20,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnMonitor = document.getElementById('btnMonitor');
     if (btnMonitor) {
         btnMonitor.addEventListener('click', runDiagnostics);
-        initChart();
-        initServerStatsChart();
-        loadWatchlist();
     }
+    
+    // Initialize charts and load data for all users
+    initChart();
+    initServerStatsChart();
+    loadWatchlist();
+    loadDevicesData();
+    loadRecentAlerts();
+    loadDashboardStats();
+
+    // Set up polling intervals for real-time dashboard data (5s updates)
+    setInterval(loadDevicesData, 5000);
+    setInterval(loadRecentAlerts, 5000);
+    setInterval(loadDashboardStats, 5000);
     
     // Theme Toggle Logic
     const themeBtn = document.getElementById('themeToggle');
@@ -52,6 +62,39 @@ document.addEventListener('DOMContentLoaded', function() {
             // won't automatically recolor unless we force a rebuild, 
             // but for now it's okay.
         });
+    }
+
+    // Initialize WebSockets for real-time pushing
+    if (typeof NetworkIDSWebSocket !== 'undefined') {
+        try {
+            const socketClient = new NetworkIDSWebSocket();
+            socketClient.on('connected', () => {
+                socketClient.joinRoom('dashboard');
+                console.log("Joined WebSocket dashboard room.");
+            });
+            socketClient.on('new_alert', (alert) => {
+                console.log("Socket alert received:", alert);
+                loadRecentAlerts();
+                showToast(`[ALERT] ${alert.message}`, alert.severity === 'High' ? 'danger' : 'warning');
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('NetSentry Security Alert', { body: alert.message });
+                }
+            });
+            socketClient.on('new_ids_event', (event) => {
+                console.log("Socket IDS event received:", event);
+                loadDashboardStats();
+                if (typeof fetchIdsEvents === 'function') {
+                    fetchIdsEvents();
+                }
+            });
+        } catch (e) {
+            console.warn("Failed to hook socket client in main.js:", e);
+        }
+    }
+    
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
     }
 });
 
@@ -171,11 +214,17 @@ async function runDiagnostics() {
         });
         const data = await response.json();
 
-        // Update KPI cards
-        document.getElementById('valLatency').innerText = data.latency === 'Timeout' ? 'Timeout' : `${data.latency} ms`;
-        document.getElementById('f-latency').innerText = data.latency === 'Timeout' ? 'Timeout' : `${data.latency} ms`;
+        // Update KPI cards safely
+        const valLatencyEl = document.getElementById('valLatency');
+        if (valLatencyEl) {
+            valLatencyEl.innerText = data.latency === 'Timeout' ? 'Timeout' : `${data.latency} ms`;
+        }
+        const fLatencyEl = document.getElementById('f-latency');
+        if (fLatencyEl) {
+            fLatencyEl.innerText = data.latency === 'Timeout' ? 'Timeout' : `${data.latency} ms`;
+        }
 
-        // Update AI Threat Panel
+        // Update Rule Diagnostics Panel
         const issueEl = document.getElementById('aiIssue');
         const recEl   = document.getElementById('aiRecommendation');
         const riskEl  = document.getElementById('aiRiskLevel');
@@ -195,8 +244,8 @@ async function runDiagnostics() {
         }
         if (riskEl)  riskEl.innerHTML = `<span style="color:${riskColor}">● ${risk}</span>`;
         if (ringEl)  { ringEl.className = `threat-level-ring ${ringClass}`; ringEl.innerText = threatPct; }
-        if (confEl)  confEl.innerText = '96%';
-        if (barEl)   barEl.style.width = '96%';
+        if (confEl)  confEl.innerText = '100%';
+        if (barEl)   barEl.style.width = '100%';
         if (document.getElementById('kpi-threat')) document.getElementById('kpi-threat').innerText = threatPct;
 
         // Update alerts feed
@@ -404,5 +453,180 @@ async function removeFromWatchlist(ip) {
         loadWatchlist();
     } catch(e) {
         showToast('Failed to remove IP.', 'danger');
+    }
+}
+
+// --- Devices API Integration ---
+async function loadDevicesData() {
+    try {
+        const res = await fetch('/api/devices');
+        const data = await res.json();
+        
+        // Update KPI Cards
+        const total = data.devices.length;
+        const online = data.devices.filter(d => d.status.toLowerCase() !== 'offline').length;
+        const offline = total - online;
+        
+        if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
+        if (document.getElementById('kpi-online')) document.getElementById('kpi-online').innerText = online;
+        if (document.getElementById('kpi-offline')) document.getElementById('kpi-offline').innerText = offline;
+        
+        // Update Footer and Badges
+        if (document.getElementById('f-devices')) document.getElementById('f-devices').innerText = total;
+        if (document.getElementById('totalDeviceBadge')) document.getElementById('totalDeviceBadge').innerText = total + ' devices';
+        
+        // Update Connected Devices Table
+        const tbody = document.getElementById('devicesTableBody');
+        if (tbody) {
+            tbody.innerHTML = '';
+            data.devices.forEach(device => {
+                const tr = document.createElement('tr');
+                const badgeStatusClass = device.status.toLowerCase() === 'offline' ? 'status-offline' : (device.status.toLowerCase() === 'high latency' ? 'status-warning' : 'status-online');
+                const badgeTypeClass = device.color_class === 'danger' ? 'status-offline' : (device.color_class === 'warning' ? 'status-warning' : 'status-online');
+                
+                tr.innerHTML = `
+                    <td><i class="bi ${device.icon} me-2 text-${device.color_class}"></i>${device.hostname}</td>
+                    <td class="mono">${device.ip}</td>
+                    <td class="mono">${device.mac}</td>
+                    <td><span class="status-badge ${badgeTypeClass}"><span class="status-dot"></span> ${device.type}</span></td>
+                    <td><span class="status-badge ${badgeStatusClass}"><span class="status-dot"></span> ${device.status}</span></td>
+                    <td><button class="btn-noc-outline" style="padding:3px 10px; font-size:0.75rem;" onclick="setTarget('${device.ip}')">Diagnose</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // Update Device Type Chart if it exists
+        if (window.deviceTypeChart) {
+            window.deviceTypeChart.data.datasets[0].data = [
+                data.metrics.workstations,
+                data.metrics.mobile,
+                data.metrics.printers,
+                data.metrics.unclassified
+            ];
+            // Update labels to match new categories returned by metrics
+            window.deviceTypeChart.data.labels = ['Workstation', 'Mobile', 'Printer/IoT', 'Unknown'];
+            window.deviceTypeChart.update();
+        }
+        
+        // Update Network Topology Map
+        if (typeof window.refreshTopology === 'function') {
+            window.refreshTopology(data.devices);
+        }
+        
+    } catch(e) {
+        console.error("Failed to load devices data:", e);
+    }
+}
+
+// --- Alerts API Integration ---
+async function loadRecentAlerts() {
+    try {
+        const res = await fetch('/api/alerts/recent');
+        const data = await res.json();
+        
+        // Update KPI
+        if (document.getElementById('kpi-alerts')) {
+            document.getElementById('kpi-alerts').innerText = data.unresolved_count;
+        }
+        
+        // Update header badge
+        if (document.getElementById('alertCount')) {
+            document.getElementById('alertCount').innerText = `${data.unresolved_count} active`;
+            if (data.unresolved_count > 0) {
+                document.getElementById('alertCount').className = 'status-badge status-warning';
+            } else {
+                document.getElementById('alertCount').className = 'status-badge status-online';
+            }
+        }
+        
+        // Populate feed
+        const feed = document.getElementById('alertsFeed');
+        if (feed) {
+            feed.innerHTML = '';
+            if (data.alerts.length === 0) {
+                feed.innerHTML = '<div class="text-center py-3 text-muted" style="font-size: 0.85rem;">No recent alerts.</div>';
+            } else {
+                data.alerts.forEach(alert => {
+                    let sevClass = 'sev-low';
+                    let sevLabel = 'LOW';
+                    
+                    if (alert.severity === 'High') {
+                        sevClass = 'sev-high';
+                        sevLabel = 'HIGH';
+                    } else if (alert.severity === 'Medium') {
+                        sevClass = 'sev-medium';
+                        sevLabel = 'MED';
+                    }
+                    
+                    feed.innerHTML += `
+                        <div class="alert-item">
+                            <span class="alert-severity ${sevClass}">${sevLabel}</span>
+                            <div>
+                                <div class="alert-msg">${alert.message}</div>
+                                <div class="alert-time"><i class="bi bi-clock me-1"></i>${alert.time}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+    } catch (e) {
+        console.error("Failed to load alerts:", e);
+        const feed = document.getElementById('alertsFeed');
+        if (feed) feed.innerHTML = '<div class="text-center py-3 text-danger" style="font-size: 0.85rem;">Error loading alerts.</div>';
+    }
+}
+
+// --- Dashboard Stats API Integration ---
+async function loadDashboardStats() {
+    try {
+        const res = await fetch('/api/dashboard_stats');
+        const data = await res.json();
+        
+        // Update Protocol Chart
+        if (window.protocolChart) {
+            window.protocolChart.data.labels = data.protocols.labels;
+            window.protocolChart.data.datasets[0].data = data.protocols.data;
+            window.protocolChart.update();
+        }
+        
+        // Update Footer and Uptime KPI
+        if (document.getElementById('f-packets')) {
+            document.getElementById('f-packets').innerText = data.packets_today.toLocaleString();
+        }
+        if (document.getElementById('f-threats')) {
+            document.getElementById('f-threats').innerText = data.threats_blocked.toLocaleString();
+        }
+        if (document.getElementById('kpi-uptime')) {
+            document.getElementById('kpi-uptime').innerText = `${data.uptime}%`;
+        }
+        
+        // Update Latency, Bandwidth, Threats, Alerts dynamically
+        if (document.getElementById('valLatency')) {
+            document.getElementById('valLatency').innerText = data.latency > 0 ? `${data.latency} ms` : '-- ms';
+        }
+        if (document.getElementById('kpi-bandwidth')) {
+            document.getElementById('kpi-bandwidth').innerText = `${data.bandwidth} Mbps`;
+        }
+        if (document.getElementById('kpi-threat')) {
+            document.getElementById('kpi-threat').innerText = `${data.threat_score}%`;
+        }
+        if (document.getElementById('kpi-alerts')) {
+            document.getElementById('kpi-alerts').innerText = data.active_alerts;
+        }
+        
+        // Update Ring and Risk level indicators
+        const threatRing = document.getElementById('threatRing');
+        if (threatRing) {
+            threatRing.innerText = `${data.threat_score}%`;
+            threatRing.className = `threat-level-ring ring-${data.threat_score >= 50 ? 'high' : (data.threat_score >= 15 ? 'medium' : 'low')}`;
+        }
+        if (document.getElementById('aiRiskLevel')) {
+            document.getElementById('aiRiskLevel').innerText = data.risk_level;
+        }
+    } catch (e) {
+        console.error("Failed to load dashboard stats:", e);
     }
 }

@@ -1,14 +1,20 @@
 {% extends "base.html" %}
+{% block page_title %}My Profile{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center g-4">
+    <!-- Profile Info Card -->
     <div class="col-md-6">
         <div class="card hover-animate shadow-sm border-0">
-            <div class="card-header  pt-3 pb-3">
+            <div class="card-header pt-3 pb-3">
                 <h5 class="card-title mb-0"><i class="bi bi-person"></i> My Profile</h5>
             </div>
             <div class="card-body">
                 <div class="text-center mb-4">
-                    <img src="{{ url_for('static', filename='profile_pics/' + current_user.image_file) }}" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                    <img src="{{ url_for('static', filename='profile_pics/' + current_user.image_file) }}"
+                         class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                    <div class="mt-2">
+                        <span class="badge bg-primary text-capitalize">{{ current_user.role }}</span>
+                    </div>
                 </div>
                 <form method="POST" action="{{ url_for('main.profile') }}" enctype="multipart/form-data">
                     <div class="mb-3">
@@ -23,10 +29,119 @@
                         <label class="form-label">Update Profile Picture</label>
                         <input class="form-control" type="file" name="picture" accept="image/*">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Changes</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save me-1"></i> Save Changes</button>
                 </form>
             </div>
         </div>
     </div>
+
+    <!-- Change Password Card -->
+    <div class="col-md-6">
+        <div class="card hover-animate shadow-sm border-0">
+            <div class="card-header pt-3 pb-3">
+                <h5 class="card-title mb-0"><i class="bi bi-shield-lock"></i> Change Password</h5>
+            </div>
+            <div class="card-body">
+                <div id="pwAlert" class="alert d-none" role="alert"></div>
+                <div class="mb-3">
+                    <label class="form-label">Current Password</label>
+                    <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="newPassword" placeholder="Enter new password (min 6 chars)">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" placeholder="Re-enter new password">
+                </div>
+                <button type="button" class="btn btn-warning w-100" id="changePasswordBtn">
+                    <i class="bi bi-key me-1"></i> Update Password
+                </button>
+            </div>
+        </div>
+
+        <!-- Account Info Card -->
+        <div class="card hover-animate shadow-sm border-0 mt-4">
+            <div class="card-header pt-3 pb-3">
+                <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Account Info</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">User ID</span>
+                        <strong>#{{ current_user.id }}</strong>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Role</span>
+                        <span class="badge bg-primary text-capitalize">{{ current_user.role }}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2">
+                        <span class="text-muted">Username</span>
+                        <strong>{{ current_user.username }}</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('changePasswordBtn').addEventListener('click', function() {
+    const current = document.getElementById('currentPassword').value;
+    const newPw   = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    const alertEl = document.getElementById('pwAlert');
+
+    alertEl.className = 'alert d-none';
+
+    if (!current || !newPw || !confirm) {
+        alertEl.className = 'alert alert-warning';
+        alertEl.textContent = 'Please fill in all password fields.';
+        return;
+    }
+    if (newPw.length < 6) {
+        alertEl.className = 'alert alert-warning';
+        alertEl.textContent = 'New password must be at least 6 characters.';
+        return;
+    }
+    if (newPw !== confirm) {
+        alertEl.className = 'alert alert-danger';
+        alertEl.textContent = 'New passwords do not match.';
+        return;
+    }
+
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
+
+    fetch('{{ url_for("main.change_password") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({current_password: current, new_password: newPw})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alertEl.className = 'alert alert-success';
+            alertEl.textContent = 'Password updated successfully!';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        } else {
+            alertEl.className = 'alert alert-danger';
+            alertEl.textContent = data.message || 'Failed to update password.';
+        }
+    })
+    .catch(() => {
+        alertEl.className = 'alert alert-danger';
+        alertEl.textContent = 'An error occurred. Please try again.';
+    })
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-key me-1"></i> Update Password';
+    });
+});
+</script>
 {% endblock %}

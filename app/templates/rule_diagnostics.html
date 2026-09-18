@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% block page_title %}Rule Diagnostics{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0" style="color: var(--text-bright); font-weight:700;">
+            <i class="bi bi-list-check me-2" style="color: var(--primary);"></i>Rule Diagnostics Engine
+        </h4>
+        <p class="mb-0" style="font-size:0.82rem; color: var(--text-muted);">Predefined firewall rules, threat inspection limits, and recent triggers</p>
+    </div>
+    <div class="live-badge fs-6 px-3 py-2">
+        <span class="status-dot me-2" style="background: var(--success);" id="engineStatusDot"></span><span id="engineStatusText">RULE ENGINE ACTIVE</span>
+    </div>
+</div>
+
+<!-- ===== TARGET IP ROW ===== -->
+<div class="noc-card mb-4">
+    <div class="noc-card-body d-flex align-items-center gap-3" style="padding: 14px 18px;">
+        <i class="bi bi-crosshair" style="color: var(--primary); font-size:1.1rem;"></i>
+        <span style="font-size:0.85rem; color: var(--text-muted); white-space: nowrap;">Target IP / Hostname</span>
+        <input type="text" class="noc-input" id="targetIp" value="8.8.8.8" style="max-width:240px;">
+        {% if current_user.is_authenticated and current_user.role != 'viewer' %}
+        <button class="btn-noc" id="btnMonitor">
+            <i class="bi bi-play-fill"></i> Run Diagnostics
+        </button>
+        {% endif %}
+        <div id="loadingIndicator" class="d-none d-flex align-items-center gap-2">
+            <div class="spinner-border text-primary" style="width:1.2rem; height:1.2rem; border-width:2px;" role="status"></div>
+            <span style="font-size:0.82rem; color: var(--text-muted);">Engine scanning...</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DIAGNOSTICS RESULT PANEL ===== -->
+<div class="noc-card mb-4">
+    <div class="noc-card-header">
+        <span><i class="bi bi-shield-check"></i> Rule Diagnostics Panel</span>
+        <span class="live-badge">ENGINE ACTIVE</span>
+    </div>
+    <div class="noc-card-body">
+        <div id="aiResultsPanel">
+            <div class="d-flex align-items-center gap-4 mb-4">
+                <div class="threat-level-ring ring-low" id="threatRing">18%</div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:0.82rem; color: var(--text-muted);">Rule Confidence</span>
+                        <span style="font-size:0.82rem; color: var(--success);" id="aiConfidence">100%</span>
+                    </div>
+                    <div class="confidence-bar-bg mb-3">
+                        <div class="confidence-bar-fill" id="confidenceBar" style="width:96%;"></div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div style="font-size:0.72rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Risk Level</div>
+                            <div style="color: var(--success); font-weight:700;" id="aiRiskLevel">🟢 Low</div>
+                        </div>
+                        <div class="col-6">
+                            <div style="font-size:0.72rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Possible Cause</div>
+                            <div style="color: var(--text-main); font-weight:600;" id="aiIssue">No Scan Run Yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top:14px;">
+                <div style="font-size:0.75rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Troubleshooting Recommendations</div>
+                <div id="aiRecommendationList">
+                    <div class="d-flex align-items-start gap-2 mb-2">
+                        <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                        <span style="font-size:0.875rem;" id="aiRecommendation">Click "Run Diagnostics" to analyze the network state.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-7">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-activity"></i> System Reliability & Health Trend</span>
+            </div>
+            <div class="noc-card-body">
+                <canvas id="healthTrendChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="noc-card h-100">
+            <div class="noc-card-header">
+                <span><i class="bi bi-gear-fill"></i> Predefined Security Rules</span>
+            </div>
+            <div class="noc-card-body">
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-color) !important;">
+                    <span class="text-muted">Rule Engine</span>
+                    <span class="text-success fw-bold">Deterministic</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-color) !important;">
+                    <span class="text-muted">Inference Speed</span>
+                    <span class="text-bright fw-bold" id="diag-inference">0.1ms</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-color) !important;">
+                    <span class="text-muted">Active Inspection Rules</span>
+                    <span class="text-bright fw-bold">5 Rules Running</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Total Diagnoses Logged</span>
+                    <span class="text-bright fw-bold" id="diag-total-preds">--</span>
+                </div>
+                <a href="{{ url_for('main.settings_panel') }}" class="btn btn-primary w-100 mt-2">
+                    <i class="bi bi-sliders me-1"></i> Edit Rule Thresholds
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="noc-card mb-4">
+    <div class="noc-card-header">
+        <span><i class="bi bi-shield-lock-fill"></i> Rule Definitions & Alert Policies</span>
+    </div>
+    <div class="noc-card-body p-0">
+        <div class="table-responsive">
+            <table class="noc-table">
+                <thead>
+                    <tr>
+                        <th>Rule ID</th>
+                        <th>Network Parameter</th>
+                        <th>Default Limit</th>
+                        <th>Classification</th>
+                        <th>Severity / Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-bold" style="color:var(--primary);">RULE_01</td>
+                        <td>Very high packet rate (DDoS Flood)</td>
+                        <td>&ge; 1000 packets / 10s</td>
+                        <td>SYN Flood (DDoS)</td>
+                        <td><span class="alert-severity status-offline">CRITICAL / Block IP</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold" style="color:var(--primary);">RULE_02</td>
+                        <td>Many destination ports scanned quickly</td>
+                        <td>&ge; 15 unique ports / 10s</td>
+                        <td>Sequential Port Scan</td>
+                        <td><span class="alert-severity status-offline">HIGH / Block IP</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold" style="color:var(--primary);">RULE_03</td>
+                        <td>Repeated failed socket/TCP connections</td>
+                        <td>&ge; 5 failed attempts / 10s</td>
+                        <td>Brute Force / Scan</td>
+                        <td><span class="alert-severity status-warning">HIGH / Connection Drop</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold" style="color:var(--primary);">RULE_04</td>
+                        <td>Abnormally high bandwidth usage rate</td>
+                        <td>&ge; 50 MB / 10s</td>
+                        <td>Bandwidth Warning</td>
+                        <td><span class="alert-severity status-warning">MEDIUM / Alert Admin</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold" style="color:var(--primary);">RULE_05</td>
+                        <td>Unreachable watchlisted devices</td>
+                        <td>100% ICMP packet loss</td>
+                        <td>Device Offline</td>
+                        <td><span class="alert-severity status-offline">HIGH / System Email</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="noc-card">
+    <div class="noc-card-header">
+        <span><i class="bi bi-list-check"></i> Recent Rule Trigger Logs</span>
+    </div>
+    <div class="noc-card-body p-0">
+        <div class="table-responsive">
+            <table class="noc-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Target IP</th>
+                        <th>Telemetry Features</th>
+                        <th>Triggered Rule</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ruleDiagnosticsBody">
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading rule logs...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let healthChartCtx = document.getElementById('healthTrendChart').getContext('2d');
+    let healthChart = new Chart(healthChartCtx, {
+        type: 'line',
+        data: {
+            labels: ['-60s', '-50s', '-40s', '-30s', '-20s', '-10s', 'Now'],
+            datasets: [{
+                label: 'System Health Index (%)',
+                data: [100, 100, 100, 100, 100, 100, 100],
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 80, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8892B0' } },
+                x: { grid: { display: false }, ticks: { color: '#8892B0' } }
+            }
+        }
+    });
+
+    function loadDiagnosticsData() {
+        fetch('/api/rule_metrics')
+            .then(res => res.json())
+            .then(data => {
+                // Update chart
+                if (data.trend) {
+                    healthChart.data.datasets[0].data = data.trend;
+                    healthChart.update();
+                }
+
+                // Update text indicators
+                document.getElementById('diag-inference').innerText = data.details.inference || '0.1ms';
+                document.getElementById('diag-total-preds').innerText = data.details.total_predictions || '0';
+
+                // Update table logs
+                const tbody = document.getElementById('ruleDiagnosticsBody');
+                tbody.innerHTML = '';
+
+                if (data.classifications && data.classifications.length > 0) {
+                    data.classifications.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${row.time}</td>
+                            <td class="fw-bold">${row.ip}</td>
+                            <td>${row.features}</td>
+                            <td><span class="badge bg-secondary-glow text-bright" style="font-size:0.75rem;">${row.state}</span></td>
+                            <td><span class="alert-severity ${row.status}">${row.status === 'status-online' ? 'NORMAL' : 'TRIGGERED'}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">No logs recorded.</td></tr>';
+                }
+            })
+            .catch(err => {
+                console.error("Error loading rule diagnostics:", err);
+            });
+    }
+
+    // Check if target IP is passed via URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetIpParam = urlParams.get('target');
+    if (targetIpParam) {
+        const targetIpInput = document.getElementById('targetIp');
+        if (targetIpInput) {
+            targetIpInput.value = targetIpParam;
+            setTimeout(() => {
+                const btnMonitor = document.getElementById('btnMonitor');
+                if (btnMonitor) btnMonitor.click();
+            }, 600);
+        }
+    }
+
+    // Load instantly and periodically
+    loadDiagnosticsData();
+    setInterval(loadDiagnosticsData, 8000);
+});
+</script>
+{% endblock %}

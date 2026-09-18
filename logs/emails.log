@@ -1,0 +1,16 @@
+
+============================================================
+TIME:     2026-08-17 10:53:23
+TO:       analyst@example.com
+SUBJECT:  [NetSentry] Test Email — Resend API Configuration Check
+------------------------------------------------------------
+NetSentry AI — Security Alert
+========================================
+Severity : Low
+Subject  : Test Email from NetSentry AI
+Time     : 2026-08-17 10:53:17
+
+This is a test email. Resend API is working correctly!
+
+View alerts: http://localhost:5000/alerts
+============================================================

@@ -1,0 +1,21 @@
+{
+  "system_name": "NetSentry LAN Monitors",
+  "org_name": "Local Subnet Network",
+  "alert_email": "admin@example.com",
+  "timezone": "UTC",
+  "log_retention": 30,
+  "alert_retention": 60,
+  "ping_interval": 2,
+  "dashboard_refresh": 15,
+  "latency_threshold": 150,
+  "pkt_loss_threshold": 10,
+  "notif_offline": true,
+  "notif_online": true,
+  "notif_latency": true,
+  "email_enabled": false,
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587,
+  "smtp_tls": true,
+  "smtp_user": "",
+  "firewall_dry_run": true
+}

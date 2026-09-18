@@ -2,21 +2,29 @@
 {% block content %}
 <div class="card hover-animate shadow">
     <div class="card-header bg-success text-white">
-        <h4 class="mb-0">Register Administrator</h4>
+        <h4 class="mb-0 text-white">Create Account</h4>
     </div>
     <div class="card-body p-4">
         <form method="POST" action="">
             <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" class="form-control" name="username" required>
+                <label class="form-label text-white">Username</label>
+                <input type="text" class="form-control" name="username" placeholder="Enter username" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Email address</label>
-                <input type="email" class="form-control" name="email" required>
+                <label class="form-label text-white">Email address</label>
+                <input type="email" class="form-control" name="email" placeholder="Enter email" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" class="form-control" name="password" required>
+                <label class="form-label text-white">Password</label>
+                <input type="password" class="form-control" name="password" placeholder="Enter password" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-white">Account Role</label>
+                <select class="form-select form-control" name="role" required>
+                    <option value="admin">Administrator</option>
+                    <option value="analyst">Security Analyst</option>
+                    <option value="user">User / Viewer</option>
+                </select>
             </div>
             <button type="submit" class="btn btn-success w-100">Sign Up</button>
         </form>
