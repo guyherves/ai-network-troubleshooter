@@ -6,7 +6,7 @@
  * 
  * Run once: http://localhost/fyp/clear_and_scan.php
  */
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/includes/db.php';
 require_login();
 require_admin();
 
@@ -131,7 +131,7 @@ if ($ownIp && strpos($ownIp, $subnet) === 0) {
     <title>NetSentry — Real Network Scan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="app/static/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <style>
         body { background: #0a0f1e; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 2rem; }
         .result-card { background: #101828; border: 1px solid #1e293b; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }

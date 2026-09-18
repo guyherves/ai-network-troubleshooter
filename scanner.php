@@ -5,8 +5,8 @@
  */
 
 $pageTitle = "Network Scanner — NetSentry";
-require_once __DIR__ . '/header.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $pdo = get_db();
 $netInfo = get_network_gateway_info();
@@ -285,4 +285,4 @@ function renderScanResults(devices) {
 }
 </script>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

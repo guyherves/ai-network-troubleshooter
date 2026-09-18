@@ -1,6 +1,6 @@
 <?php
 $pageTitle = "System Configuration & Settings";
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/includes/header.php';
 require_admin();
 
 $settingsFile = __DIR__ . '/settings.json';
@@ -85,4 +85,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 </div>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

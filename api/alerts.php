@@ -3,7 +3,7 @@
  * NetSentry PHP API - Alert Management Endpoint
  */
 
-require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../includes/db.php';
 require_login();
 
 $pdo = get_db();

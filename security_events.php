@@ -2,8 +2,8 @@
 /**
  * NetSentry - Security Events & Intrusion Detection Logs Page
  */
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/functions.php';
 
 require_login();
 $pdo = get_db();

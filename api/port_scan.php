@@ -4,7 +4,7 @@
  * Scans a target IP for active listening TCP services using stream sockets.
  */
 
-require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../includes/db.php';
 require_login();
 
 $ip = trim($_GET['ip'] ?? $_POST['ip'] ?? '');

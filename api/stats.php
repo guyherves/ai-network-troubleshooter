@@ -3,7 +3,7 @@
  * NetSentry PHP API - Live Telemetry & Statistics (REAL DATA ONLY)
  */
 
-require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/bandwidth_helper.php';
 require_login();
 

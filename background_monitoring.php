@@ -4,7 +4,7 @@
  * CLI Script: run via terminal `php background_monitoring.php` or set up Windows Task Scheduler / Cron job.
  */
 
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/includes/db.php';
 
 echo "[NetSentry Monitor] Starting LAN device and network telemetry background monitor...\n";
 

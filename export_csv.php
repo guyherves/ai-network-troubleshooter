@@ -4,8 +4,8 @@
  * Section 15: Network Inventory Report, Network Availability Report, Network Changes Report
  */
 
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/functions.php';
 require_login();
 
 $pdo = get_db();

@@ -4,8 +4,8 @@
  * Section 8: Metadata, Latency/Availability Charts, Live Ping, Port Scan, Notes, Trusted Toggle
  */
 
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/functions.php';
 
 require_login();
 $pdo = get_db();
@@ -465,4 +465,4 @@ function runPortScan(ip) {
 }
 </script>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

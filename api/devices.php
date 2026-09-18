@@ -3,8 +3,8 @@
  * NetSentry PHP API - Subnet Devices & Device Operations Endpoint
  */
 
-require_once __DIR__ . '/../db.php';
-require_once __DIR__ . '/../functions.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_login();
 
 $pdo = get_db();

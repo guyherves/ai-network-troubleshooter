@@ -4,7 +4,7 @@
  * Seeds the database with default RBAC users (Admin, Analyst, Viewer).
  */
 
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/includes/db.php';
 
 $pdo = get_db();
 

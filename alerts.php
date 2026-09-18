@@ -1,6 +1,6 @@
 <?php
 $pageTitle = "System & Offline Device Alerts";
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/includes/header.php';
 $pdo = get_db();
 
 $stmt = $pdo->query("SELECT * FROM alert ORDER BY id DESC LIMIT 100");
@@ -86,4 +86,4 @@ async function clearAllAlerts() {
 }
 </script>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -5,8 +5,8 @@
  */
 
 $pageTitle = "Network Topology — NetSentry";
-require_once __DIR__ . '/header.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $pdo = get_db();
 $devices = get_subnet_devices($pdo, 60);
@@ -257,4 +257,4 @@ if (topoCanvas) {
 }
 </script>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

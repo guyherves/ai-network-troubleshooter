@@ -4,8 +4,8 @@
  * Cleans out dummy test entries and performs a 100% real live scan of the active subnet.
  */
 
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $pdo = get_db();
 

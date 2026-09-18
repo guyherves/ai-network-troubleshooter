@@ -3,7 +3,7 @@
  * NetSentry PHP API - Security & AI Model Statistics Endpoint
  */
 
-require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../includes/db.php';
 require_login();
 
 $pdo = get_db();

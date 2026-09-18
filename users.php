@@ -1,6 +1,6 @@
 <?php
 $pageTitle = "User Management & RBAC";
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/includes/header.php';
 require_admin();
 
 $pdo = get_db();
@@ -152,4 +152,4 @@ $allUsers = $stmtUsers->fetchAll();
     </div>
 </div>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

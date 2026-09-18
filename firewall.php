@@ -1,6 +1,6 @@
 <?php
 $pageTitle = "IPS Firewall Rule Manager";
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/firewall_manager.php';
 require_admin();
 
@@ -106,4 +106,4 @@ if (file_exists($settingsFile)) {
     <?php endif; ?>
 </div>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -5,8 +5,8 @@
  */
 
 $pageTitle = "Network Events — NetSentry";
-require_once __DIR__ . '/header.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $pdo = get_db();
 
@@ -173,4 +173,4 @@ $reconnCount   = (int)$pdo->query("SELECT COUNT(*) FROM network_events WHERE eve
     </div>
 </div>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

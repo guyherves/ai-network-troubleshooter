@@ -1,6 +1,6 @@
 <?php
 $pageTitle = "Ping & Diagnosis History";
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/includes/header.php';
 $pdo = get_db();
 
 $stmt = $pdo->query("SELECT * FROM diagnosis_history ORDER BY id DESC LIMIT 50");
@@ -47,4 +47,4 @@ $records = $stmt->fetchAll();
     </div>
 </div>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
